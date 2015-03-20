@@ -1,0 +1,50 @@
+---
+title: "Solar radiation during the solar eclipse of March 20, 2015, Jena, Germany"
+author: "CA Sierra, MPI for Biogeochemistry, Jena, Germany"
+date: "March 20, 2015"
+output: html_document
+---
+
+The diurnal cycle of solar radiation during the eclipse of March 20, 2015 is presented here with a comparison with the diurnal cycle of two previous days. Radiation was measured as shortwave incoming radiation, and as photosynthetically active radiation. 
+
+Incoming short wave solar radiation and photosynthetically active solar radiation are continuoslly measured at the roof of the Max Planck Institute for Biogeochemistry in Jena, Germany. A description of the measurement station can be found here <http://www.bgc-jena.mpg.de/wetter/Weatherstation.pdf>.
+
+Data for this comparison was downloaded from <http://www.bgc-jena.mpg.de/wetter/> for the Weather Station Beutenberg. 
+
+Code for processing the data
+
+```{r}
+all=read.csv("~/Eclipse/mpi_roof.csv")
+
+date=strptime(as.character(all[,1]),format="%d.%m.%Y %H:%M:%S") #Convert dates and times to POSIX
+all=cbind(date,all[,-1]) #Replaces dates and times for POSIX dates
+
+Wed=strptime("2015-03-18 00:00:00", "%Y-%m-%d %H:%M:%S")
+Thr=strptime("2015-03-19 00:00:00", "%Y-%m-%d %H:%M:%S")
+Fri=strptime("2015-03-20 00:00:00", "%Y-%m-%d %H:%M:%S")
+
+Wedset=all[all[,1]>=Wed & all[,1]<Thr,c(1,18,19)] #data only for 18.03.2015
+Thrset=all[all[,1]>=Thr & all[,1]<Fri,c(1,18,19)] #data only for 19.03.2015
+Friset=all[all[,1]>=Fri,c(1,18,19)] #data only for 20.03.2015
+
+hr=seq(0,(23+5/6),1/6)
+hr2=seq(0,(19+2/6),1/6)
+```
+
+A comparison of the diurnal cycle of shortwave incoming radiation clearly shows a dramatic decrease for the hours of the eclipse in comparison with the two previous days. 
+
+```{r, echo=FALSE}
+plot(hr,Wedset[,2],type="l",col="green",ylab="Short wave incoming radiation (W m-2)",xlab="Hour of day")
+lines(hr,Thrset[,2],col="orange")
+lines(hr2,Friset[,2],col="blue")
+legend("topright",c("18.03.2015","19.03.2015","20.03.2015"),col=c("green","orange","blue"),lty=1,bty="n")
+```
+
+Similarly, photosynthetically active radiation showed a dramatic decrease during the eclipse hours in comparison to the two previous days.
+
+```{r, echo=FALSE}
+plot(hr,Wedset[,3],type="l",col="green",ylab="Photosynthetically active radiation (umol m-2 s-1)",xlab="Hour of day")
+lines(hr,Thrset[,3],col="orange")
+lines(hr2,Friset[,3],col="blue")
+legend("topright",c("18.03.2015","19.03.2015","20.03.2015"),col=c("green","orange","blue"),lty=1,bty="n")
+```
