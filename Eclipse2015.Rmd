@@ -2,7 +2,7 @@
 title: "Solar radiation during the solar eclipse of March 20, 2015, Jena, Germany"
 author: "CA Sierra, MPI for Biogeochemistry, Jena, Germany"
 date: "March 20, 2015"
-output: html_document
+output: pdf_document
 ---
 
 The diurnal cycle of solar radiation during the eclipse of March 20, 2015 is presented here with a comparison with the diurnal cycle of two previous days. Radiation was measured as shortwave incoming radiation, and as photosynthetically active radiation. 
