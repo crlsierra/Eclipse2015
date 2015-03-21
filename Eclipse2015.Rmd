@@ -1,6 +1,6 @@
 ---
 title: "Solar radiation during the solar eclipse of March 20, 2015, Jena, Germany"
-author: "CA Sierra, MPI for Biogeochemistry, Jena, Germany"
+author: "Max Planck Institute for Biogeochemistry, Jena, Germany"
 date: "March 21, 2015"
 output: pdf_document
 ---
