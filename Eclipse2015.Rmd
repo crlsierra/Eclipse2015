@@ -1,17 +1,17 @@
 ---
 title: "Solar radiation during the solar eclipse of March 20, 2015, Jena, Germany"
 author: "CA Sierra, MPI for Biogeochemistry, Jena, Germany"
-date: "March 20, 2015"
+date: "March 21, 2015"
 output: pdf_document
 ---
 
-The diurnal cycle of solar radiation during the eclipse of March 20, 2015 is presented here with a comparison with the diurnal cycle of two previous days. Radiation was measured as shortwave incoming radiation, and as photosynthetically active radiation. 
+The diurnal cycle of solar radiation during the eclipse of March 20, 2015 is presented here with a comparison with the diurnal cycle of two previous days. Radiation was measured as shortwave incoming radiation (SW), and as photosynthetically active radiation (PAR). 
 
 Incoming short wave solar radiation and photosynthetically active solar radiation are continuoslly measured at the roof of the Max Planck Institute for Biogeochemistry in Jena, Germany. A description of the measurement station can be found here <http://www.bgc-jena.mpg.de/wetter/Weatherstation.pdf>.
 
 Data for this comparison was downloaded from <http://www.bgc-jena.mpg.de/wetter/> for the Weather Station Beutenberg. 
 
-Code for processing the data
+Code for pre-processing the data
 
 ```{r}
 all=read.csv("~/Eclipse/mpi_roof.csv")
@@ -19,32 +19,112 @@ all=read.csv("~/Eclipse/mpi_roof.csv")
 date=strptime(as.character(all[,1]),format="%d.%m.%Y %H:%M:%S") #Convert dates and times to POSIX
 all=cbind(date,all[,-1]) #Replaces dates and times for POSIX dates
 
+#Start of the day, used for subsetting
 Wed=strptime("2015-03-18 00:00:00", "%Y-%m-%d %H:%M:%S")
 Thr=strptime("2015-03-19 00:00:00", "%Y-%m-%d %H:%M:%S")
 Fri=strptime("2015-03-20 00:00:00", "%Y-%m-%d %H:%M:%S")
+Sat=strptime("2015-03-21 00:00:00", "%Y-%m-%d %H:%M:%S")
 
 Wedset=all[all[,1]>=Wed & all[,1]<Thr,c(1,18,19)] #data only for 18.03.2015
 Thrset=all[all[,1]>=Thr & all[,1]<Fri,c(1,18,19)] #data only for 19.03.2015
-Friset=all[all[,1]>=Fri,c(1,18,19)] #data only for 20.03.2015
+Friset=all[all[,1]>=Fri & all[,1]<Sat,c(1,18,19)] #data only for 20.03.2015
 
 hr=seq(0,(23+5/6),1/6)
-hr2=seq(0,(19+2/6),1/6)
 ```
 
-A comparison of the diurnal cycle of shortwave incoming radiation clearly shows a dramatic decrease for the hours of the eclipse in comparison with the two previous days. 
+# Diurnal radiation cycle
+A comparison of the diurnal cycle of SW clearly shows a dramatic decrease for the hours of the eclipse in comparison with the two previous days. 
 
 ```{r, echo=FALSE}
 plot(hr,Wedset[,2],type="l",col="green",ylab="Short wave incoming radiation (W m-2)",xlab="Hour of day")
 lines(hr,Thrset[,2],col="orange")
-lines(hr2,Friset[,2],col="blue")
+lines(hr,Friset[,2],col="blue")
 legend("topright",c("18.03.2015","19.03.2015","20.03.2015"),col=c("green","orange","blue"),lty=1,bty="n")
 ```
 
-Similarly, photosynthetically active radiation showed a dramatic decrease during the eclipse hours in comparison to the two previous days.
+Similarly, PAR showed a dramatic decrease during the eclipse hours in comparison to the two previous days.
 
 ```{r, echo=FALSE}
 plot(hr,Wedset[,3],type="l",col="green",ylab="Photosynthetically active radiation (umol m-2 s-1)",xlab="Hour of day")
 lines(hr,Thrset[,3],col="orange")
-lines(hr2,Friset[,3],col="blue")
+lines(hr,Friset[,3],col="blue")
 legend("topright",c("18.03.2015","19.03.2015","20.03.2015"),col=c("green","orange","blue"),lty=1,bty="n")
 ```
+
+
+# Radiation differences
+Differences in radiation between days can be calculated as $\Delta = y_t - y_{t-n}$, where $y_t$ is the observed radiation during the ecplise, and $t-n$ with $n \in \{ 1,2 \}$ are days previous the eclipse.
+
+For short wave incoming radiation, reductions were larger during the eclipse in comparison with 18.03.2015 than with the previous day. Larger positive differences indicate that incoming radiation was higher during 20.03.2015 during non-eclipse hours in comparison with the previous two days. 
+```{r, echo=FALSE}
+plot(hr, Friset[,2]-Wedset[,2],type="l",xlab="Hour of day",ylab=expression(paste(Delta," (W/m2)")),ylim=c(-600,200))
+lines(hr, Friset[,2]-Thrset[,2],col=2)
+legend("bottomright",c("Difference with 18.03.2015","Differnce with 19.03.2015"),col=1:2,lty=1,bty="n")
+```
+
+
+A similar pattern was observed for the photisynthetically active radiation flux. 
+
+```{r, echo=FALSE}
+plot(hr, Friset[,3]-Wedset[,3],type="l",xlab="Hour of day",ylab=expression(paste(Delta," (umol m-2 s-1)")),ylim=c(-800,200))
+lines(hr, Friset[,3]-Thrset[,3],col=2)
+legend("bottomright",c("Difference with 18.03.2015","Differnce with 19.03.2015"),col=1:2,lty=1,bty="n")
+```
+
+# Diurnal reduction in solar radiation
+The integral of the curves can be used to compared the total and percent differences between days. To calculate the integrals numerically, we need first a to create a function; this function is a spline cubic interpolation. The code to calculate these functions is given by
+
+```{r}
+splineSWWed=splinefun(hr,Wedset[,2])
+splineSWThr=splinefun(hr,Thrset[,2])
+splineSWFri=splinefun(hr,Friset[,2])
+
+splinePARWed=splinefun(hr,Wedset[,3])
+splinePARThr=splinefun(hr,Thrset[,3])
+splinePARFri=splinefun(hr,Friset[,3])
+```
+
+The definite integrals in the interval $h \in \{0,  23\}$ are then calculated as 
+
+```{r}
+intSWWed=integrate(splineSWWed,lower=0,upper=23)$value
+intSWThr=integrate(splineSWThr,lower=0,upper=23)$value
+intSWFri=integrate(splineSWFri,lower=0,upper=23)$value
+
+intPARWed=integrate(splinePARWed,lower=0,upper=23)$value
+intPARThr=integrate(splinePARThr,lower=0,upper=23)$value
+intPARFri=integrate(splinePARFri,lower=0,upper=23)$value
+```
+
+The percent differences in total radiation are then
+
+```{r}
+pR.SW=c(100*(1-(intSWFri/intSWWed)), 100*(1-(intSWFri/intSWThr)))
+pR.PAR=c(100*(1-(intPARFri/intPARWed)), 100*(1-(intPARFri/intPARThr)))
+
+data.frame(WRT=c("Wednesday", "Thursday"),pR.SW,pR.PAR)
+```
+where WRT abbreviates *with respect to* and pR *percent reduction*.
+
+These differences were larger in terms of PAR than SW. These small differences are due to the fact that during 20.03.2015 a higher amount of radiation was observed during non-eclipse times. 
+
+The percent reduction in radiation during the time of the eclipse can be calculated by integrating only in the interval $h \in \{9 \, 12 \}$
+```{r}
+intSWWed=integrate(splineSWWed,lower=9,upper=12)$value
+intSWThr=integrate(splineSWThr,lower=9,upper=12)$value
+intSWFri=integrate(splineSWFri,lower=9,upper=12)$value
+
+intPARWed=integrate(splinePARWed,lower=9,upper=12)$value
+intPARThr=integrate(splinePARThr,lower=9,upper=12)$value
+intPARFri=integrate(splinePARFri,lower=9,upper=12)$value
+```
+
+The differences in total radiation are then
+
+```{r}
+pR.SW=c(100*(1-(intSWFri/intSWWed)), 100*(1-(intSWFri/intSWThr)))
+pR.PAR=c(100*(1-(intPARFri/intPARWed)), 100*(1-(intPARFri/intPARThr)))
+
+data.frame(WRT=c("Wednesday", "Thursday"),pR.SW,pR.PAR)
+```
+
